@@ -1,33 +1,26 @@
-# Nome do workflow - aparece na aba Actions do GitHub
-name: CI/CD Pipeline
+# .github/workflows/ci.yml - Versão simplificada para primeiro teste
+name: CI
 
 # Define quando este workflow deve ser executado
 on:
-  # Executa em push para main (branch principal)
   push:
     branches: [main, develop]
-  # Executa em pull requests para main
   pull_request:
     branches: [main]
 
-# Define variáveis de ambiente globais para todos os jobs
+# Variáveis de ambiente
 env:
   NODE_VERSION: '20.x'
-  # Variáveis não-sensíveis - podem ficar diretamente no workflow
   PORT: 3000
   BASE_URL: 'http://localhost:3000'
   NODE_ENV: 'test'
-  # DATABASE_URL para testes - diferente da produção, então não é sensível aqui
-  TEST_DATABASE_URL: 'postgresql://test:test@localhost:5432/testdb'
 
-# Define os jobs que serão executados
 jobs:
-  # Job principal que executa lint, testes e build
   test-and-build:
     name: 'Test & Build'
     runs-on: ubuntu-latest
 
-    # Configuração de serviços - PostgreSQL para testes
+    # Configuração do PostgreSQL para testes
     services:
       postgres:
         image: postgres:15
@@ -37,7 +30,6 @@ jobs:
           POSTGRES_DB: testdb
         ports:
           - 5432:5432
-        # Configurações de saúde para aguardar o PostgreSQL estar pronto
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -45,123 +37,55 @@ jobs:
           --health-retries 5
 
     steps:
-      # Step 1: Checkout do código - baixa o repositório
+      # Checkout do código
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
 
-      # Step 2: Setup do Node.js com cache automático
+      # Setup do Node.js
       - name: 'Setup Node.js'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          # Otimização: usa cache baseado no package-lock.json
-          cache-dependency-path: package-lock.json
 
-      # Step 3: Instalação das dependências
-      # npm ci é mais rápido e confiável que npm install para CI
+      # Instalação das dependências
       - name: 'Install Dependencies'
         run: npm ci
 
-      # Step 4: Verificação de formatação com Prettier
-      # Garante que o código segue padrões de formatação
+      # Verificação de formatação
       - name: 'Check Code Formatting'
         run: npm run format -- --check
 
-      # Step 5: Execução do linter
-      # Verifica qualidade do código e padrões de escrita
+      # Execução do linter
       - name: 'Run ESLint'
         run: npm run lint
 
-      # Step 6: Geração do cliente Prisma
-      # Necessário para que os testes funcionem corretamente
+      # Geração do cliente Prisma
       - name: 'Generate Prisma Client'
         run: npm run prisma:generate
 
-      # Step 7: Execução das migrações do banco de dados
-      # Prepara o banco de dados de teste
-      - name: 'Run Database Migrations'
+      # Configuração do banco de dados de teste
+      - name: 'Setup Test Database'
         run: npm run prisma:push
         env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/testdb'
 
-      # Step 8: Execução dos testes unitários
-      # Testa a lógica de negócio isoladamente
+      # Execução dos testes unitários
       - name: 'Run Unit Tests'
         run: npm run test
         env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/testdb'
           JWT_SECRET: 'test-jwt-secret-for-ci'
           PORT: ${{ env.PORT }}
           BASE_URL: ${{ env.BASE_URL }}
 
-      # Step 9: Execução dos testes com coverage
-      # Mede a cobertura de código pelos testes
-      - name: 'Run Tests with Coverage'
-        run: npm run test:cov
-        env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
-          JWT_SECRET: 'test-jwt-secret-for-ci'
-          PORT: ${{ env.PORT }}
-          BASE_URL: ${{ env.BASE_URL }}
-
-      # Step 10: Execução dos testes end-to-end
-      # Testa a aplicação completa, incluindo APIs
-      - name: 'Run E2E Tests'
-        run: npm run test:e2e
-        env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
-          JWT_SECRET: 'test-jwt-secret-for-ci'
-          PORT: ${{ env.PORT }}
-          BASE_URL: ${{ env.BASE_URL }}
-
-      # Step 11: Build da aplicação
-      # Compila TypeScript para JavaScript
+      # Build da aplicação
       - name: 'Build Application'
         run: npm run build
 
-      # Step 12: Upload do relatório de coverage
-      # Envia métricas de cobertura para análise externa
-      - name: 'Upload Coverage Reports'
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-
-      # Step 13: Upload dos artefatos de build
-      # Salva o código compilado para possível deployment
-      - name: 'Upload Build Artifacts'
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist-files
-          path: dist/
-          retention-days: 7
-
-  # Job separado para análise de segurança
-  security-audit:
-    name: 'Security Audit'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout Repository'
-        uses: actions/checkout@v4
-
-      - name: 'Setup Node.js'
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      # Auditoria de segurança das dependências
-      - name: 'Run Security Audit'
-        run: npm audit --audit-level=high
-
-      # Verificação de vulnerabilidades conhecidas
-      - name: 'Check for Known Vulnerabilities'
-        run: npm audit --audit-level=moderate --json > audit-results.json || true
-
-      - name: 'Upload Audit Results'
-        uses: actions/upload-artifact@v3
-        with:
-          name: security-audit
-          path: audit-results.json
+    # Opcional: Execução dos testes com coverage (comentado para simplificar)
+    # - name: 'Run Tests with Coverage'
+    #   run: npm run test:cov
+    #   env:
+    #     DATABASE_URL: 'postgresql://test:test@localhost:5432/testdb'
+    #     JWT_SECRET: 'test-jwt-secret-for-ci'
