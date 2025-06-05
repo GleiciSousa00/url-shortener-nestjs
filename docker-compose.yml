@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: url_shortener
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: url_shortener_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - url_shortener_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://url_shortener:password123@db:5432/url_shortener_db
+      JWT_SECRET: your-super-secret-jwt-key-here
+      PORT: 3000
+      BASE_URL: http://localhost:3000
+    networks:
+      - url_shortener_network
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+volumes:
+  postgres_data:
+
+networks:
+  url_shortener_network:
+    driver: bridge 
