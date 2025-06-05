@@ -1,0 +1,126 @@
+# .github/workflows/deploy.yml - Workflow de deployment usando secrets reais
+name: Deploy to Production
+
+# Executa apenas quando há merge na branch main
+on:
+  push:
+    branches: [main]
+  # Permite execução manual para casos especiais
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+  # Variáveis não-sensíveis para produção
+  NODE_ENV: 'production'
+  PORT: 3000
+  # BASE_URL será diferente para produção - pode ser configurada aqui ou vir de secrets
+
+jobs:
+  deploy:
+    name: 'Deploy to Production'
+    runs-on: ubuntu-latest
+    # Só executa se os testes passaram
+    needs: [test-and-build] # Referencia o job do workflow de CI
+
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Generate Prisma Client'
+        run: npm run prisma:generate
+
+      - name: 'Build Application'
+        run: npm run build
+
+      # Exemplo de deployment para diferentes plataforms
+      - name: 'Deploy to Heroku'
+        if: ${{ vars.DEPLOYMENT_PLATFORM == 'heroku' }}
+        uses: akhileshns/heroku-deploy@v3.12.14
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ vars.HEROKU_APP_NAME }}
+          heroku_email: ${{ vars.HEROKU_EMAIL }}
+          # As variáveis sensíveis são configuradas diretamente no Heroku
+          # através do painel ou CLI, não precisam ser passadas aqui
+
+      - name: 'Deploy to Railway'
+        if: ${{ vars.DEPLOYMENT_PLATFORM == 'railway' }}
+        uses: railway-app/railway-deploy@v1
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: ${{ vars.RAILWAY_SERVICE_NAME }}
+          # Environment variables são configuradas no Railway dashboard
+
+      - name: 'Deploy to DigitalOcean App Platform'
+        if: ${{ vars.DEPLOYMENT_PLATFORM == 'digitalocean' }}
+        uses: digitalocean/app_action@v1.1.5
+        with:
+          app_name: ${{ vars.DO_APP_NAME }}
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+
+      # Exemplo de deployment customizado para VPS
+      - name: 'Deploy to Custom VPS'
+        if: ${{ vars.DEPLOYMENT_PLATFORM == 'vps' }}
+        run: |
+          # Cria arquivo temporário com variáveis de ambiente
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.production
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.production
+          echo "PORT=${{ env.PORT }}" >> .env.production
+          echo "BASE_URL=${{ vars.PRODUCTION_BASE_URL }}" >> .env.production
+          echo "NODE_ENV=${{ env.NODE_ENV }}" >> .env.production
+
+          # Deployment via SSH (exemplo)
+          # rsync -avz --exclude node_modules . user@server:/path/to/app/
+          # ssh user@server 'cd /path/to/app && npm install --production && npm run prisma:migrate:deploy && pm2 restart app'
+        env:
+          # Chaves SSH para acesso ao servidor
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_HOST: ${{ vars.SERVER_HOST }}
+          SERVER_USER: ${{ vars.SERVER_USER }}
+
+      # Exemplo de deployment para Docker Registry
+      - name: 'Build and Push Docker Image'
+        if: ${{ vars.DEPLOYMENT_PLATFORM == 'docker' }}
+        run: |
+          # Build da imagem Docker
+          docker build -t ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
+          docker build -t ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_NAME }}:latest .
+
+          # Login no registry
+          echo ${{ secrets.DOCKER_REGISTRY_PASSWORD }} | docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_REGISTRY_USERNAME }} --password-stdin
+
+          # Push das imagens
+          docker push ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_NAME }}:latest
+
+      # Executa migrações de banco em produção (se necessário)
+      - name: 'Run Production Migrations'
+        run: npm run prisma:migrate:deploy
+        env:
+          # Usa a DATABASE_URL real de produção
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Notificação de sucesso
+      - name: 'Notify Deployment Success'
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          -H 'Content-type: application/json' \
+          --data '{"text":"✅ Deployment to production successful! Version: ${{ github.sha }}"}'
+
+      # Notificação de falha
+      - name: 'Notify Deployment Failure'
+        if: failure()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          -H 'Content-type: application/json' \
+          --data '{"text":"❌ Deployment to production failed! Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}'

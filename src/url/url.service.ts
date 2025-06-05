@@ -146,7 +146,7 @@ export class UrlService {
 
     const baseUrl = this.configService.get<string>('BASE_URL');
 
-    return urls.map((url) => ({
+    return urls.map(url => ({
       id: url.id,
       originalUrl: url.originalUrl,
       shortUrl: `${baseUrl}/${url.shortCode}`,

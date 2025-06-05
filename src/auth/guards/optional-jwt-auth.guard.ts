@@ -12,7 +12,7 @@ export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+  handleRequest(err: any, user: any, _info: any, _context: ExecutionContext) {
     // Se houver erro ou não houver usuário, simplesmente retorna undefined
     // ao invés de lançar exceção
     if (err || !user) {

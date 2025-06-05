@@ -7,4 +7,4 @@ import { UrlController } from './url.controller';
   providers: [UrlService],
   exports: [UrlService],
 })
-export class UrlModule {} 
+export class UrlModule {}

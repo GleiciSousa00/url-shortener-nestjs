@@ -16,4 +16,4 @@ export class LoginDto {
   })
   @IsNotEmpty({ message: 'Senha é obrigatória' })
   password: string;
-} 
+}

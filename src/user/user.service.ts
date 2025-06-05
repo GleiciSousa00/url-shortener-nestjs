@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from '../auth/dto/register.dto';
 import * as bcrypt from 'bcryptjs';
@@ -31,13 +35,13 @@ export class UserService {
     });
 
     // Retornar sem a senha
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
-      where: { 
+      where: {
         email,
         deletedAt: null,
       },
@@ -46,7 +50,7 @@ export class UserService {
 
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
-      where: { 
+      where: {
         id,
         deletedAt: null,
       },
@@ -56,7 +60,7 @@ export class UserService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password2, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
-} 
+}

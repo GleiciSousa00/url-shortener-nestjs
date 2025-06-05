@@ -9,4 +9,4 @@ export class UpdateUrlDto {
   @IsUrl({}, { message: 'URL deve ter um formato válido' })
   @IsNotEmpty({ message: 'URL é obrigatória' })
   originalUrl: string;
-} 
+}

@@ -39,7 +39,9 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
+  // eslint-disable-next-line no-console
   console.log(`🚀 Aplicação rodando em: http://localhost:${port}`);
+  // eslint-disable-next-line no-console
   console.log(
     `📚 Documentação Swagger disponível em: http://localhost:${port}/api`,
   );

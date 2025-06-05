@@ -17,7 +17,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
-  ApiSecurity,
 } from '@nestjs/swagger';
 import { Response, Request } from 'express';
 import { UrlService } from './url.service';
@@ -165,9 +164,10 @@ export class UrlController {
         validUrl = `https://${validUrl}`;
       }
 
+      // Validar se a URL é válida
       try {
         new URL(validUrl);
-      } catch (error) {
+      } catch {
         return res.status(HttpStatus.BAD_REQUEST).json({
           statusCode: 400,
           message: 'URL de destino inválida',
@@ -209,6 +209,7 @@ export class UrlController {
         });
       }
 
+      // eslint-disable-next-line no-console
       console.error('Erro no redirecionamento:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         statusCode: 500,
