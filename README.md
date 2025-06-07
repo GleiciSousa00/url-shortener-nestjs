@@ -13,6 +13,9 @@ Sistema de encurtamento de URLs desenvolvido com NestJS, Prisma e PostgreSQL.
 - ✅ API REST documentada com Swagger
 - ✅ Validação de entrada completa
 - ✅ Docker Compose para ambiente completo
+- ✅ **34 testes unitários** com 100% cobertura dos métodos públicos
+- ✅ **CI/CD completo** com GitHub Actions (testes + deploy)
+- ✅ **Infraestrutura como código** com Terraform (Google Cloud)
 
 ## 📋 Pré-requisitos
 
@@ -310,18 +313,40 @@ O sistema foi projetado para escalar verticalmente:
 - Contabilização de cliques otimizada
 - Cache pode ser implementado (Redis)
 
-## 🧪 Testes
+## 🧪 Testes Unitários Completos
+
+### 📊 Cobertura Atual
+- **34 testes implementados** ✅
+- **AuthService**: 11 testes (registro, login, validação)
+- **UrlService**: 23 testes (CRUD, validação, cliques)
+- **100% dos métodos públicos** cobertos
+
+### 🔧 Executar Testes
 
 ```bash
-# Testes unitários
+# Todos os testes
 npm run test
 
-# Testes e2e
-npm run test:e2e
+# Testes específicos
+npm test src/auth/auth.service.spec.ts
+npm test src/url/url.service.spec.ts
 
-# Coverage
+# Modo watch (desenvolvimento)
+npm run test:watch
+
+# Com cobertura detalhada
 npm run test:cov
+
+# Testes end-to-end
+npm run test:e2e
 ```
+
+### 🎯 Arquitetura de Testes
+- **Padrão AAA** (Arrange, Act, Assert)
+- **Mocking completo** de dependências
+- **Isolamento** entre testes
+- **Cenários de erro** cobertos
+- **Dados consistentes** e realistas
 
 ## 🔍 Desenvolvimento
 
@@ -333,10 +358,15 @@ src/
 │   ├── dto/             # Data Transfer Objects
 │   ├── guards/          # Guards de autenticação
 │   ├── strategies/      # Estratégias Passport
-│   └── decorators/      # Decorators customizados
+│   ├── decorators/      # Decorators customizados
+│   └── *.spec.ts        # 11 testes unitários
 ├── user/                # Módulo de usuários
 ├── url/                 # Módulo de URLs
+│   └── *.spec.ts        # 23 testes unitários
 ├── prisma/              # Módulo Prisma
+├── .github/workflows/   # CI/CD pipelines
+├── terraform/           # Infraestrutura como código
+├── test/               # Testes e2e
 └── main.ts             # Ponto de entrada
 ```
 
@@ -365,6 +395,143 @@ Execute `npx prisma db push` para sincronizar o schema sem migrations.
 ### Porta já em uso
 
 Altere a variável `PORT` no arquivo `.env`.
+
+## 🚀 GitHub Actions (CI/CD)
+
+### 📋 Workflows Configurados
+
+#### 1. CI Pipeline (`.github/workflows/ci.yml`)
+- **Triggers**: Push para `main`/`develop` e Pull Requests
+- **Ambiente**: Ubuntu + PostgreSQL 15
+- **Etapas**:
+  - ✅ Verificação de formatação (Prettier)
+  - ✅ Análise de código (ESLint)
+  - ✅ Testes unitários completos
+  - ✅ Build da aplicação
+  - ✅ Geração do cliente Prisma
+
+#### 2. Deploy Pipeline (`.github/workflows/deploy.yml`)
+- **Trigger**: Merge na branch `main`
+- **Suporte para múltiplas plataformas**:
+  - Heroku
+  - Railway
+  - DigitalOcean App Platform
+  - VPS customizado
+  - Docker Registry
+- **Recursos**:
+  - Migrações automáticas de banco
+  - Notificações no Slack
+  - Rollback em caso de falha
+
+### ⚙️ Configuração de Secrets
+
+Configure no GitHub → Settings → Secrets:
+
+```bash
+# Banco de dados
+DATABASE_URL=postgresql://...
+
+# JWT
+JWT_SECRET=your-secret-key
+
+# Deploy (escolha a plataforma)
+HEROKU_API_KEY=...
+RAILWAY_TOKEN=...
+DO_ACCESS_TOKEN=...
+
+# Notificações
+SLACK_WEBHOOK_URL=...
+```
+
+## ☁️ Infraestrutura com Terraform
+
+### 🏗️ Arquitetura Google Cloud
+
+A infraestrutura completa é provisionada automaticamente via Terraform:
+
+#### **Recursos Provisionados**
+- **VPC Network** personalizada com subnet
+- **Cloud SQL PostgreSQL** (instância + banco + usuário)
+- **Compute Engine** (Ubuntu 22.04 + Node.js 20)
+- **Firewall Rules** (HTTP, HTTPS, SSH, porta customizada)
+- **Nginx** como reverse proxy
+
+#### **Configuração Automática**
+- ✅ Node.js 20.x instalado
+- ✅ Aplicação NestJS configurada
+- ✅ Nginx como proxy reverso
+- ✅ Serviço systemd para auto-restart
+- ✅ Logs centralizados
+
+### 🚀 Como Usar o Terraform
+
+#### 1. Pré-requisitos
+```bash
+# Instalar Terraform
+# Ter conta no Google Cloud Platform
+# Criar service account e baixar JSON key
+```
+
+#### 2. Configuração
+```bash
+cd terraform/
+
+# Copiar service account key
+cp /path/to/your-key.json service-account-key.json
+
+# Configurar variáveis
+cp terraform.tfvars.example terraform.tfvars
+# Editar terraform.tfvars com seus valores
+```
+
+#### 3. Deploy
+```bash
+# Inicializar Terraform
+terraform init
+
+# Validar configuração
+terraform validate
+
+# Ver o que será criado
+terraform plan
+
+# Aplicar infraestrutura
+terraform apply
+```
+
+#### 4. Acessar Aplicação
+```bash
+# Obter IP da aplicação
+terraform output application_ip
+
+# Acessar via navegador
+http://SEU_IP_PUBLICO
+```
+
+### 💰 Estimativa de Custos
+- **Cloud SQL (db-f1-micro)**: ~$9/mês
+- **Compute Engine (e2-micro)**: ~$6/mês
+- **Rede/Storage**: ~$2/mês
+- **Total estimado**: ~$17/mês
+
+## ⚡ Deploy Rápido
+
+### Opção 1: GitHub Actions (Recomendado)
+1. Configure os secrets no GitHub
+2. Faça push para `main`
+3. Aguarde o deploy automático
+
+### Opção 2: Terraform Manual
+```bash
+cd terraform/
+terraform init
+terraform apply
+```
+
+### Opção 3: Docker Compose Local
+```bash
+docker-compose up -d
+```
 
 ## 📄 Licença
 
