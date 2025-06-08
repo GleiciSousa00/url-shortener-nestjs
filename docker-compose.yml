@@ -5,12 +5,11 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-url_shortener}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
-      POSTGRES_DB: ${POSTGRES_DB:-url_shortener_db}
-
+      POSTGRES_USER: url_shortener
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: url_shortener_db
     ports:
-      - '${DB_PORT:-5432}:5432'
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -22,15 +21,15 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - '${PORT:-3000}:${PORT:-3000}'
+      - '3000:3000'
     depends_on:
       - db
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
-      PORT: ${PORT:-3000}
-      BASE_URL: ${BASE_URL}
-      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: 'postgresql://url_shortener:password123@db:5432/url_shortener_db'
+      JWT_SECRET: 'your-super-secret-jwt-key-here'
+      PORT: 3000
+      BASE_URL: 'http://localhost:3000'
+      NODE_ENV: 'development'
     networks:
       - url_shortener_network
     volumes:
