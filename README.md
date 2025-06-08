@@ -15,7 +15,7 @@ Sistema de encurtamento de URLs desenvolvido com NestJS, Prisma e PostgreSQL.
 - ✅ Docker Compose para ambiente completo
 - ✅ **34 testes unitários** com 100% cobertura dos métodos públicos
 - ✅ **CI/CD completo** com GitHub Actions (testes + deploy)
-- ✅ **Infraestrutura como código** com Terraform (Google Cloud)
+- ✅ **Infraestrutura como código** com Terraform Google Cloud - (Em andamento)
 
 ## 📋 Pré-requisitos
 
@@ -246,9 +246,6 @@ npm run start:dev
 # Build
 npm run build
 
-# Produção
-npm run start:prod
-
 # Testes
 npm run test
 npm run test:e2e
@@ -284,7 +281,7 @@ npm run prisma:push       # Enviar schema para banco
 - Validação de entrada em todas as rotas
 - Soft delete para preservar dados
 - CORS habilitado
-- Rate limiting (pode ser implementado)
+
 
 ## 🚦 Variáveis de Ambiente
 
@@ -465,74 +462,9 @@ A infraestrutura completa é provisionada automaticamente via Terraform:
 
 ### 🚀 Como Usar o Terraform
 
-#### 1. Pré-requisitos
-```bash
-# Instalar Terraform
-# Ter conta no Google Cloud Platform
-# Criar service account e baixar JSON key
-```
-
-#### 2. Configuração
-```bash
-cd terraform/
-
-# Copiar service account key
-cp /path/to/your-key.json service-account-key.json
-
-# Configurar variáveis
-cp terraform.tfvars.example terraform.tfvars
-# Editar terraform.tfvars com seus valores
-```
-
-#### 3. Deploy
-```bash
-# Inicializar Terraform
-terraform init
-
-# Validar configuração
-terraform validate
-
-# Ver o que será criado
-terraform plan
-
-# Aplicar infraestrutura
-terraform apply
-```
-
-#### 4. Acessar Aplicação
-```bash
-# Obter IP da aplicação
-terraform output application_ip
-
-# Acessar via navegador
-http://SEU_IP_PUBLICO
-```
-
 ### 💰 Estimativa de Custos
 - **Cloud SQL (db-f1-micro)**: ~$9/mês
 - **Compute Engine (e2-micro)**: ~$6/mês
 - **Rede/Storage**: ~$2/mês
 - **Total estimado**: ~$17/mês
 
-## ⚡ Deploy Rápido
-
-### Opção 1: GitHub Actions (Recomendado)
-1. Configure os secrets no GitHub
-2. Faça push para `main`
-3. Aguarde o deploy automático
-
-### Opção 2: Terraform Manual
-```bash
-cd terraform/
-terraform init
-terraform apply
-```
-
-### Opção 3: Docker Compose Local
-```bash
-docker-compose up -d
-```
-
-## 📄 Licença
-
-Este projeto está sob licença privada.
